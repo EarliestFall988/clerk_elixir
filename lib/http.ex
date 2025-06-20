@@ -68,7 +68,7 @@ defmodule Clerk.HTTP do
   defp headers(opts) do
     headers = Keyword.get(opts, :headers, [])
     content_type = Keyword.get(opts, :content_type, "application/json")
-    secret_key = Keyword.get(opts, :secret_key, Application.get_env(:clerk, :secret_key))
+    secret_key = System.get_env("CLERK_API_KEY") || raise("CLERK_API_KEY environment variable is missing. Have you exported it in bash?") ##Application.get_env(:clerk, :secret_key))
 
     headers ++
       [
