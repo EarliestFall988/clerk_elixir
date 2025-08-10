@@ -24,59 +24,25 @@ defmodule Clerk.AuthenticationPlug do
 
     session_key = Keyword.get(opts, :session_key, "__session")
 
-    # IO.inspect(conn.req_cookies, label: "Request Cookies")
-    # IO.inspect(get_token_from_header(conn), label: "Authorization Header")
-    IO.inspect  {:ets, :ets.info(@table_name) }
-
-
-    {:ok, token} = get_auth_token(conn, session_key)
-    IO.inspect({:token, token})
-    # IO.inspect session
-        #  {:ok, %{"sub" => user_id} = session} = Clerk.Session.verify_and_validate(session)
-        #  {:ok, user} = Clerk.User.get(user_id)
-
-    # IO.inspect(session, label: "Session")
-    # IO.inspect(user, label: "User")
-    # IO.inspect(conn, label: "Connection")
-
-    # with {:ok, session} <- get_auth_token(conn, session_key),
-    #      {:ok, %{"sub" => user_id} = session} <- Clerk.Session.verify_and_validate(session),
-    #      {:ok, user} <- Clerk.User.get(user_id) do
-    #   conn |> Plug.Conn.assign(:clerk_session, session) |> Plug.Conn.assign(:current_user, user)
-    # else
-    #   {:err, :timeout} ->
-    #     conn
-    #     |> Plug.Conn.send_resp(503, "Authentication services unavailable.") # Either Clerk is down or Clerk is throttling your requests.
-    #     |> Plug.Conn.halt()
-
-    #   _ ->
-    #     conn
-    #     |> Plug.Conn.send_resp(401, "Unauthorized")
-    #     |> Plug.Conn.halt()
-    # end
-
-
     case check_cache(conn, session_key, @cache_ttl) do
       :cache_miss ->
-        IO.inspect({"CACHE MISS"})
+        # IO.inspect({"CACHE MISS"})
         get_from_clerk(conn, session_key, nil)
 
       :cache_expired ->
-        IO.inspect({"CACHE EXPIRED"})
+        # IO.inspect({"CACHE EXPIRED"})
         get_from_clerk(conn, session_key, nil)
 
       {:grace, session, user} ->
         get_from_clerk(conn, session_key, {session, user})
 
       {:ok, session, user} ->
-        IO.inspect({"FOUND DATA FROM CACHE"})
+        # IO.inspect({"FOUND DATA FROM CACHE"})
 
         conn
         |> Plug.Conn.assign(:clerk_session, session)
         |> Plug.Conn.assign(:current_user, user)
-
     end
-
 
   end
 
@@ -153,7 +119,7 @@ defmodule Clerk.AuthenticationPlug do
       {:ok, token } ->
           case :ets.lookup(@table_name, token) do
             [{^token, data}] ->
-              IO.inspect {:cached_data_found, data}
+              # IO.inspect {:cached_data_found, data}
               validate_token(data, cache_ttl)
             [] -> :cache_miss
           end
