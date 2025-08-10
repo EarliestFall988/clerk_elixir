@@ -90,6 +90,11 @@ defmodule Clerk.HTTP do
     {:ok, nil}
   end
 
+  defp handle_response({:error, %Mint.TransportError{reason: :timeout} = err}) do
+    IO.inspect {:error, err}
+    {:err, :timeout}
+  end
+
   defp handle_response({:ok, %Finch.Response{status: status, body: body}})
        when status in [400, 401, 403, 404, 422] do
     {:error, Jason.decode!(body)}
