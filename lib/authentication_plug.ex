@@ -2,6 +2,8 @@ defmodule Clerk.AuthenticationPlug do
   @moduledoc """
   Plug for authenticating requests.
   """
+alias Clerk.AuthenticationCache
+
 
   @behaviour Plug
 
@@ -53,7 +55,9 @@ defmodule Clerk.AuthenticationPlug do
     {:ok, user} <- Clerk.User.get(user_id) do
 
 
-      :ets.insert(@table_name, {token, {session, user, System.os_time(:seconds)}})
+      # :ets.insert(@table_name, {token, {session, user, System.os_time(:seconds)}})
+      AuthenticationCache.insert(token, session, user)
+
 
       conn
       |> Plug.Conn.assign(:clerk_session, session)
@@ -117,7 +121,9 @@ defmodule Clerk.AuthenticationPlug do
 
     case token_result do
       {:ok, token } ->
-          case :ets.lookup(@table_name, token) do
+
+        # :ets.lookup(@table_name, token)
+          case AuthenticationCache.lookup_token(token) do
             [{^token, data}] ->
               # IO.inspect {:cached_data_found, data}
               validate_token(data, cache_ttl)
