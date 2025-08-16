@@ -34,7 +34,7 @@ defmodule Clerk.AuthenticationCache do
   Insert a new session into the cache
   """
   def insert(token, session, user) do
-    time = System.os_time(:seconds)
+    time = System.os_time(:second)
     IO.inspect({:inserting_data, session, token})
     :ets.insert(@table_name, {token, {session, user, time}})
   end
