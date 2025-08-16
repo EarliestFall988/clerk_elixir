@@ -25,7 +25,7 @@ defmodule Clerk.AuthenticationCache do
 
   """
   def lookup_token(token) do
-    IO.inspect({:lookup, token})
+    # IO.inspect({:lookup, token})
     :ets.lookup(@table_name, token)
   end
 
