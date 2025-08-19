@@ -53,11 +53,11 @@ alias Clerk.AuthenticationCache
     {:ok, token} = get_auth_token(conn, session_key)
 
 
-    IO.inspect {:token, token}
+    # IO.inspect {:token, token}
     {:ok, session} = Clerk.Session.verify_and_validate(token)
 
 
-    IO.inspect {:get_clerk_from, {token, session}}
+    # IO.inspect {:get_clerk_from, {token, session}}
 
     with {:ok, token} <- get_auth_token(conn, session_key),
     {:ok, %{"sub" => user_id} = session} <- Clerk.Session.verify_and_validate(token),
@@ -73,7 +73,21 @@ alias Clerk.AuthenticationCache
       |> Plug.Conn.assign(:current_user, user)
 
     else
-        {:err, :timeout} ->
+
+      {:error, :unauthorized} ->
+
+        if(grace_data != nil) do
+          {session, user} = grace_data
+          conn
+          |> Plug.Conn.assign(:clerk_session, session)
+          |> Plug.Conn.assign(:current_user, user)
+        else
+          conn
+          |> Plug.Conn.send_resp(408, "Unauthorized") # Either Clerk is down or Clerk is throttling your requests.
+          |> Plug.Conn.halt()
+        end
+
+      {:err, :timeout} ->
 
         if(grace_data != nil) do
           {session, user } = grace_data
@@ -85,9 +99,10 @@ alias Clerk.AuthenticationCache
           |> Plug.Conn.send_resp(503, "Authentication services unavailable.") # Either Clerk is down or Clerk is throttling your requests.
           |> Plug.Conn.halt()
         end
-      x ->
 
-        IO.inspect(:err, x)
+      _ ->
+
+        # IO.inspect(:err, x)
 
         if(grace_data != nil) do
           {session, user } = grace_data
