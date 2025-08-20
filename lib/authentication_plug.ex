@@ -50,11 +50,11 @@ alias Clerk.AuthenticationCache
 
   defp get_from_clerk(conn, session_key, grace_data) do
 
-    {:ok, token} = get_auth_token(conn, session_key)
+    # {:ok, token} = get_auth_token(conn, session_key)
 
 
     # IO.inspect {:token, token}
-    {:ok, session} = Clerk.Session.verify_and_validate(token)
+    # {:ok, session} = Clerk.Session.verify_and_validate(token)
 
 
     # IO.inspect {:get_clerk_from, {token, session}}
@@ -66,7 +66,6 @@ alias Clerk.AuthenticationCache
 
       # :ets.insert(@table_name, {token, {session, user, System.os_time(:seconds)}})
       AuthenticationCache.insert(token, session, user)
-
 
       conn
       |> Plug.Conn.assign(:clerk_session, session)
