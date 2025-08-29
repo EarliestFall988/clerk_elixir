@@ -28,18 +28,18 @@ alias Clerk.AuthenticationCache
 
     case check_cache(conn, session_key, @cache_ttl) do
       :cache_miss ->
-        IO.inspect({"CACHE MISS"})
+        IO.puts("[auth]: cache miss")
         get_from_clerk(conn, session_key, nil)
 
       :cache_expired ->
-        IO.inspect({"CACHE EXPIRED"})
+        IO.puts("[auth]: cache expired")
         get_from_clerk(conn, session_key, nil)
 
       {:grace, session, user} ->
         get_from_clerk(conn, session_key, {session, user})
 
       {:ok, session, user} ->
-        IO.inspect({"FOUND DATA FROM CACHE"})
+        IO.puts("[auth]: cache hit")
 
         conn
         |> Plug.Conn.assign(:clerk_session, session)
