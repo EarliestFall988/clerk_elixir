@@ -2,7 +2,8 @@ defmodule Clerk.AuthenticationPlug do
   @moduledoc """
   Plug for authenticating requests.
   """
-alias Clerk.AuthenticationCache
+  alias Clerk.Utilities
+  alias Clerk.AuthenticationCache
 
 
   @behaviour Plug
@@ -82,7 +83,7 @@ alias Clerk.AuthenticationCache
           |> Plug.Conn.assign(:current_user, user)
         else
           conn
-          |> Plug.Conn.send_resp(408, "Unauthorized") # Either Clerk is down or Clerk is throttling your requests.
+          |> Plug.Conn.send_resp(408, "Unauthorized")
           |> Plug.Conn.halt()
         end
 
@@ -95,6 +96,9 @@ alias Clerk.AuthenticationCache
           |> Plug.Conn.assign(:current_user, user)
         else
           conn
+          |> Plug.Conn.assign(:token, nil)
+          |> Plug.Conn.assign(:clerk_session, nil)
+          |> Plug.Conn.assign(:current_user, nil)
           |> Plug.Conn.send_resp(503, "Authentication services unavailable.") # Either Clerk is down or Clerk is throttling your requests.
           |> Plug.Conn.halt()
         end
@@ -110,6 +114,9 @@ alias Clerk.AuthenticationCache
           |> Plug.Conn.assign(:current_user, user)
         else
           conn
+          |> Plug.Conn.assign(:token, nil)
+          |> Plug.Conn.assign(:clerk_session, nil)
+          |> Plug.Conn.assign(:current_user, nil)
           |> Plug.Conn.send_resp(401, "Unauthorized")
           |> Plug.Conn.halt()
         end
@@ -117,7 +124,7 @@ alias Clerk.AuthenticationCache
   end
 
   defp get_auth_token(conn, session_key) do
-    auth_header = get_token_from_header(conn)
+    auth_header = Utilities.get_token_from_header(conn)
 
     if auth_header do # if the auth header token is present ...
       {:ok, auth_header}
@@ -129,23 +136,13 @@ alias Clerk.AuthenticationCache
     end
   end
 
-  defp get_token_from_header(conn) do
-    conn
-    |> Plug.Conn.get_req_header("authorization")
-    |> List.first()
-    |> case do
-      nil -> nil
-      header -> String.replace(header, "Bearer ", "")
-    end
-  end
-
 
   defp check_cache(conn, session_key, cache_ttl) do
 
     token_result = get_auth_token(conn, session_key)
 
     case token_result do
-      {:ok, token } ->
+      {:ok, token} ->
 
         # :ets.lookup(@table_name, token)
           case AuthenticationCache.lookup_token(token) do
@@ -160,7 +157,7 @@ alias Clerk.AuthenticationCache
   end
 
 
-  defp validate_token({session, user, timestamp}, cache_ttl) do
+  defp validate_token(%{session: session, user: user, time: timestamp, group_id: _group_id}, cache_ttl) do
 
     current_time = System.os_time(:second)
     session_expiry = Map.get(session, "exp", current_time + 1)

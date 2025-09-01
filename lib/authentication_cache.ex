@@ -9,7 +9,7 @@ defmodule Clerk.AuthenticationCache do
 
   @impl true
   def init(_) do
-    :ets.new(@table_name, [:set, :protected, :named_table])
+    :ets.new(@table_name, [:set, :public, :named_table])
     {:ok, %{}}
   end
 
@@ -55,7 +55,7 @@ defmodule Clerk.AuthenticationCache do
 
   def set_group_id(token, new_group_id) when is_binary(new_group_id) do
 
-    case lookup_token(token) do
+    case :ets.lookup(@table_name, token) do
       [{^token, data}] ->
         :ets.insert(@table_name, {token, %{data | group_id: new_group_id}})
         :ok
@@ -79,7 +79,7 @@ defmodule Clerk.AuthenticationCache do
 
   """
   def get_group_id(token) do
-    case lookup_token(token) do
+    case :ets.lookup(@table_name, token) do
       [{^token, data}] -> {:ok, data.group_id}
       _ -> :error
     end
